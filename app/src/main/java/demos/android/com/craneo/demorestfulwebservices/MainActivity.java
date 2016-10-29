@@ -1,6 +1,10 @@
 package demos.android.com.craneo.demorestfulwebservices;
 
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
+import android.support.v4.net.ConnectivityManagerCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
@@ -9,10 +13,15 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     TextView output;
     ProgressBar pb;
+    List<MyTask> tasks;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,6 +33,8 @@ public class MainActivity extends AppCompatActivity {
 
         pb = (ProgressBar) findViewById(R.id.progressBar);
         pb.setVisibility(View.INVISIBLE);
+
+        tasks = new ArrayList<>();
     }
 
     @Override
@@ -35,14 +46,32 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if(item.getItemId() == R.id.action_do_task){
-            MyTask task = new MyTask();
-            task.execute("Param1", "Param2", "Param3");
+            if (isOnline()){
+                requestData();
+            }else{
+                Toast.makeText(this, "Network isn't available", Toast.LENGTH_LONG).show();
+            }
         }
         return false;
     }
 
+    private void requestData() {
+        MyTask task = new MyTask();
+        task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "Param1", "Param2", "Param3");
+    }
+
     private void updateDisplay(String message) {
         output.append(message + "\n");
+    }
+
+    protected boolean isOnline(){
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        if(netInfo != null && netInfo.isConnectedOrConnecting()){
+            return true;
+        }else{
+            return false;
+        }
     }
 
 
@@ -51,7 +80,10 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPreExecute() {
             updateDisplay("Starting task");
-            pb.setVisibility(View.VISIBLE);
+            if (tasks.size()==0){
+                pb.setVisibility(View.VISIBLE);
+            }
+            tasks.add(this);
         }
 
         @Override
@@ -70,7 +102,12 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(String s) {
             updateDisplay(s);
-            pb.setVisibility(View.INVISIBLE);
+
+            tasks.remove(this);
+            if (tasks.size()==0){
+                pb.setVisibility(View.INVISIBLE);
+            }
+
         }
 
         @Override
