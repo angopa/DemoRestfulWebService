@@ -1,14 +1,18 @@
 package demos.android.com.craneo.demorestfulwebservices;
 
+import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity {
     TextView output;
+    ProgressBar pb;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -17,9 +21,9 @@ public class MainActivity extends AppCompatActivity {
 
         output = (TextView) findViewById(R.id.textView);
         output.setMovementMethod(new ScrollingMovementMethod());
-        for(int i=0; i<100;i++){
-            updateDisplay("Line "+i);
-        }
+
+        pb = (ProgressBar) findViewById(R.id.progressBar);
+        pb.setVisibility(View.INVISIBLE);
     }
 
     @Override
@@ -31,7 +35,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if(item.getItemId() == R.id.action_do_task){
-            updateDisplay("Task done!");
+            MyTask task = new MyTask();
+            task.execute("Param1", "Param2", "Param3");
         }
         return false;
     }
@@ -41,4 +46,36 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    private class MyTask extends AsyncTask<String, String, String>{
+
+        @Override
+        protected void onPreExecute() {
+            updateDisplay("Starting task");
+            pb.setVisibility(View.VISIBLE);
+        }
+
+        @Override
+        protected String doInBackground(String... strings) {
+            for (int i=0; i<strings.length; i++){
+                publishProgress("Working with "+strings[i]);
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            return "Task complete";
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            updateDisplay(s);
+            pb.setVisibility(View.INVISIBLE);
+        }
+
+        @Override
+        protected void onProgressUpdate(String... values) {
+            updateDisplay(values[0]);
+        }
+    }
 }
