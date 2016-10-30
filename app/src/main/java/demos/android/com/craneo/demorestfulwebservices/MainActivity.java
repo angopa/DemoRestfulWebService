@@ -18,10 +18,16 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.List;
 
+import demos.android.com.craneo.demorestfulwebservices.httpclient.HttpManager;
+import demos.android.com.craneo.demorestfulwebservices.model.Flower;
+import demos.android.com.craneo.demorestfulwebservices.parsers.FlowerJSONParser;
+
 public class MainActivity extends AppCompatActivity {
     TextView output;
     ProgressBar pb;
     List<MyTask> tasks;
+
+    List<Flower> flowers;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         if(item.getItemId() == R.id.action_do_task){
             if (isOnline()){
-                requestData();
+                requestData("http://services.hanselandpetal.com/secure/flowers.json");
             }else{
                 Toast.makeText(this, "Network isn't available", Toast.LENGTH_LONG).show();
             }
@@ -55,13 +61,17 @@ public class MainActivity extends AppCompatActivity {
         return false;
     }
 
-    private void requestData() {
+    private void requestData(String uri) {
         MyTask task = new MyTask();
-        task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "Param1", "Param2", "Param3");
+        task.execute(uri);
     }
 
-    private void updateDisplay(String message) {
-        output.append(message + "\n");
+    private void updateDisplay() {
+        if(flowers != null){
+            for (Flower flower: flowers){
+                output.append(flower.getName() + "\n");
+            }
+        }
     }
 
     protected boolean isOnline(){
@@ -79,7 +89,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected void onPreExecute() {
-            updateDisplay("Starting task");
+//            updateDisplay("Starting task");
             if (tasks.size()==0){
                 pb.setVisibility(View.VISIBLE);
             }
@@ -88,31 +98,33 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected String doInBackground(String... strings) {
-            for (int i=0; i<strings.length; i++){
-                publishProgress("Working with "+strings[i]);
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-            return "Task complete";
+            //Send the request to public static String getData(String uri, String userName, String password){
+            String content = HttpManager.getData(strings[0], "feeduser", "feedpassword");
+            return content;
         }
 
         @Override
         protected void onPostExecute(String s) {
-            updateDisplay(s);
 
             tasks.remove(this);
             if (tasks.size()==0){
                 pb.setVisibility(View.INVISIBLE);
             }
 
+            if (s == null){
+                Toast.makeText(MainActivity.this, "Can't connect to we service", Toast.LENGTH_LONG).show();
+                return;
+            }
+
+            flowers = new FlowerJSONParser().parseFeed(s);
+            updateDisplay();
+
+
         }
 
         @Override
         protected void onProgressUpdate(String... values) {
-            updateDisplay(values[0]);
-        }
+
+        }//            updateDisplay(values[0]);
     }
 }
