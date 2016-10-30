@@ -1,41 +1,63 @@
 package demos.android.com.craneo.demorestfulwebservices;
 
+import android.app.ListActivity;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
-import android.support.v4.net.ConnectivityManagerCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.text.method.ScrollingMovementMethod;
+import android.support.annotation.Nullable;
+import android.support.v7.app.AppCompatCallback;
+import android.support.v7.app.AppCompatDelegate;
+import android.support.v7.view.ActionMode;
+import android.util.LruCache;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ProgressBar;
-import android.widget.TextView;
+
 import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import demos.android.com.craneo.demorestfulwebservices.adapter.FlowerAdapter;
 import demos.android.com.craneo.demorestfulwebservices.httpclient.HttpManager;
 import demos.android.com.craneo.demorestfulwebservices.model.Flower;
 import demos.android.com.craneo.demorestfulwebservices.parsers.FlowerJSONParser;
 
-public class MainActivity extends AppCompatActivity {
-    TextView output;
+public class MainActivity extends ListActivity {
+
+    public static final String PHOTOS_BASE_URL =
+            "http://services.hanselandpetal.com/photos/";
     ProgressBar pb;
     List<MyTask> tasks;
-
     List<Flower> flowers;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        //setContentView(R.layout.activity_main);
+        AppCompatCallback callback = new AppCompatCallback() {
+            @Override
+            public void onSupportActionModeStarted(ActionMode mode) {
+            }
 
-        output = (TextView) findViewById(R.id.textView);
-        output.setMovementMethod(new ScrollingMovementMethod());
+            @Override
+            public void onSupportActionModeFinished(ActionMode mode) {
+            }
+
+            @Nullable
+            @Override
+            public ActionMode onWindowStartingSupportActionMode(ActionMode.Callback callback) {
+                return null;
+            }
+        };
+
+        AppCompatDelegate delegate = AppCompatDelegate.create(this, callback);
+
+        delegate.onCreate(savedInstanceState);
+        delegate.setContentView(R.layout.activity_main);
 
         pb = (ProgressBar) findViewById(R.id.progressBar);
         pb.setVisibility(View.INVISIBLE);
@@ -67,11 +89,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateDisplay() {
-        if(flowers != null){
-            for (Flower flower: flowers){
-                output.append(flower.getName() + "\n");
-            }
-        }
+        //Use FlowerAdapter to display data
+        FlowerAdapter adapter = new FlowerAdapter(this, R.layout.item_flower, flowers);
+        setListAdapter(adapter);
     }
 
     protected boolean isOnline(){
@@ -85,11 +105,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private class MyTask extends AsyncTask<String, String, String>{
+    private class MyTask extends AsyncTask<String, String, List<Flower>>{
 
         @Override
         protected void onPreExecute() {
-//            updateDisplay("Starting task");
             if (tasks.size()==0){
                 pb.setVisibility(View.VISIBLE);
             }
@@ -97,34 +116,31 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        protected String doInBackground(String... strings) {
+        protected List<Flower> doInBackground(String... strings) {
             //Send the request to public static String getData(String uri, String userName, String password){
             String content = HttpManager.getData(strings[0], "feeduser", "feedpassword");
-            return content;
+            flowers = FlowerJSONParser.parseFeed(content);
+
+            return flowers;
         }
 
         @Override
-        protected void onPostExecute(String s) {
+        protected void onPostExecute(List<Flower> result) {
 
             tasks.remove(this);
             if (tasks.size()==0){
                 pb.setVisibility(View.INVISIBLE);
             }
 
-            if (s == null){
+            if (result == null){
                 Toast.makeText(MainActivity.this, "Can't connect to we service", Toast.LENGTH_LONG).show();
                 return;
             }
-
-            flowers = new FlowerJSONParser().parseFeed(s);
             updateDisplay();
-
-
         }
 
         @Override
         protected void onProgressUpdate(String... values) {
-
-        }//            updateDisplay(values[0]);
+        }
     }
 }

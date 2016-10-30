@@ -1,7 +1,10 @@
 package demos.android.com.craneo.demorestfulwebservices.model;
 
+import android.graphics.Bitmap;
+
 /**
  * Created by crane on 10/29/2016.
+ * POJO
  */
 
 public class Flower {
@@ -12,6 +15,7 @@ public class Flower {
     private String instructions;
     private double price;
     private String photo;
+    private Bitmap bitmap;
 
     public int getProductId() {
         return productId;
@@ -59,5 +63,13 @@ public class Flower {
 
     public void setPhoto(String photo) {
         this.photo = photo;
+    }
+
+    public Bitmap getBitmap() {
+        return bitmap;
+    }
+
+    public void setBitmap(Bitmap bitmap) {
+        this.bitmap = bitmap;
     }
 }

@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">DemoRestfulWebServices</string>
+    <string name="flower_name_placeholder">Flower Name</string>
 </resources>
