@@ -8,13 +8,21 @@ import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
+
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
 import demos.android.com.craneo.demorestfulwebservices.request.RequestPackage;
+import okhttp3.Authenticator;
+import okhttp3.Credentials;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.Route;
+
+
 
 /**
  * Created by crane on 10/29/2016.
@@ -53,7 +61,7 @@ public class HttpManager {
             }
 
             StringBuilder sb = new StringBuilder();
-            Log.d("HttpManager", uri);
+
             reader = new BufferedReader(new InputStreamReader(con.getInputStream()));
 
             //Get all the information in the reader.
@@ -110,6 +118,72 @@ public class HttpManager {
             StringBuilder sb = new StringBuilder();
 
             reader = new BufferedReader(new InputStreamReader(con.getInputStream()));
+
+            String line;
+            while((line = reader.readLine()) != null){
+                sb.append(line + "\n");
+            }
+            return sb.toString();
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+            return null;
+        } catch (IOException e) {
+            try {
+                int status = con.getResponseCode();
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
+            e.printStackTrace();
+            return null;
+        }finally{
+            if(reader != null){
+                try {
+                    reader.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    return null;
+                }
+            }
+        }
+    }
+
+    /**
+     * This method is use when tried to get data from a Secure URL.
+     * @param uri
+     * @param userName
+     * @param password
+     * @return
+     */
+    public static String getDataOkHttpClient(String uri, final String userName, final String password){
+
+        BufferedReader reader = null;
+        //If the connection fail we can have the code
+        HttpURLConnection con = null;
+
+        try {
+            URL url = new URL(uri);
+
+            OkHttpClient client = new OkHttpClient();
+            //Set a header value "Authorization" with the value Authenticator()
+            client = new OkHttpClient.Builder()
+                    .authenticator(new Authenticator() {
+                        @Override
+                        public Request authenticate(Route route, Response response) throws IOException {
+                            String credentials = Credentials.basic(userName, password);
+                            return response.request().newBuilder().
+                                    header("Authorization", credentials).build();
+                        }
+                    })
+                    .build();
+
+            Request request = new Request.Builder()
+                    .url(url)
+                    .build();
+            Response response = client.newCall(request).execute();
+
+            StringBuilder sb = new StringBuilder();
+
+            reader = new BufferedReader(new InputStreamReader(response.body().byteStream()));
 
             String line;
             while((line = reader.readLine()) != null){

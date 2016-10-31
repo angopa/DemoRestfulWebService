@@ -23,6 +23,9 @@ import java.util.List;
 import demos.android.com.craneo.demorestfulwebservices.MainActivity;
 import demos.android.com.craneo.demorestfulwebservices.R;
 import demos.android.com.craneo.demorestfulwebservices.model.Flower;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 /**
  * Created by crane on 10/30/2016.
@@ -34,6 +37,8 @@ public class FlowerAdapter extends ArrayAdapter<Flower> {
     private List<Flower> flowerList;
 
     private LruCache<Integer, Bitmap> imageCache;
+
+    private OkHttpClient client = new OkHttpClient();
 
     public FlowerAdapter(Context context, int resource, List<Flower> objects){
         super(context, resource, objects);
@@ -86,7 +91,12 @@ public class FlowerAdapter extends ArrayAdapter<Flower> {
 
             try{
                 String imageUrl = MainActivity.PHOTOS_BASE_URL + flower.getPhoto();
-                InputStream in  = (InputStream) new URL(imageUrl).getContent();
+                //Code for the OkHttpClient
+                Request request = new Request.Builder()
+                        .url(imageUrl)
+                        .build();
+                Response response = client.newCall(request).execute();
+                InputStream in  = response.body().byteStream();
                 Bitmap bitmap = BitmapFactory.decodeStream(in);
                 flower.setBitmap(bitmap);
                 in.close();
@@ -104,7 +114,6 @@ public class FlowerAdapter extends ArrayAdapter<Flower> {
         protected void onPostExecute(FlowerAndView result) {
             ImageView image = (ImageView) result.view.findViewById(R.id.imageView1);
             image.setImageBitmap(result.bitmap);
-//            result.flower.setBitmap(result.bitmap);
             imageCache.put(result.flower.getProductId(), result.bitmap);
         }
     }

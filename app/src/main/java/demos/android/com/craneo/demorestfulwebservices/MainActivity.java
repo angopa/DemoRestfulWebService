@@ -1,6 +1,5 @@
 package demos.android.com.craneo.demorestfulwebservices;
 
-import android.app.DownloadManager;
 import android.app.ListActivity;
 import android.content.Context;
 import android.net.ConnectivityManager;
@@ -11,7 +10,7 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatCallback;
 import android.support.v7.app.AppCompatDelegate;
 import android.support.v7.view.ActionMode;
-import android.util.LruCache;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -34,6 +33,7 @@ public class MainActivity extends ListActivity {
             "http://services.hanselandpetal.com/photos/";
     ProgressBar pb;
     List<MyTask> tasks;
+    List<MySimpleTask> tasksS;
     List<Flower> flowers;
 
     @Override
@@ -65,6 +65,7 @@ public class MainActivity extends ListActivity {
         pb.setVisibility(View.INVISIBLE);
 
         tasks = new ArrayList<>();
+        tasksS = new ArrayList<>();
     }
 
     @Override
@@ -77,8 +78,8 @@ public class MainActivity extends ListActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         if(item.getItemId() == R.id.action_do_task){
             if (isOnline()){
-                //requestData("http://services.hanselandpetal.com/secure/flowers.json");
-                requestData("http://127.0.0.1:8080/Jersey_1/rest/hello");
+//                requestData("http://services.hanselandpetal.com/secure/flowers.json");
+                requestSimpleData("http://services.hanselandpetal.com/secure/flowers.json");
             }else{
                 Toast.makeText(this, "Network isn't available", Toast.LENGTH_LONG).show();
             }
@@ -95,6 +96,11 @@ public class MainActivity extends ListActivity {
         p.setParams("param3", "value3");
         MyTask task = new MyTask();
         task.execute(p);
+    }
+
+    private void requestSimpleData(String uri) {
+        MySimpleTask task = new MySimpleTask();
+        task.execute(uri);
     }
 
     private void updateDisplay() {
@@ -138,6 +144,46 @@ public class MainActivity extends ListActivity {
 
             tasks.remove(this);
             if (tasks.size()==0){
+                pb.setVisibility(View.INVISIBLE);
+            }
+
+            if (result == null){
+                Toast.makeText(MainActivity.this, "Can't connect to the service", Toast.LENGTH_LONG).show();
+                return;
+            }
+            updateDisplay();
+        }
+
+        @Override
+        protected void onProgressUpdate(String... values) {
+        }
+    }
+
+    private class MySimpleTask extends AsyncTask<String, String, List<Flower>>{
+
+        @Override
+        protected void onPreExecute() {
+            if (tasksS.size()==0){
+                pb.setVisibility(View.VISIBLE);
+            }
+            tasksS.add(this);
+        }
+
+        @Override
+        protected List<Flower> doInBackground(String... strings) {
+            //Send the request to public static String getData(String uri, String userName, String password){
+            String content = HttpManager.getDataOkHttpClient(strings[0], "feeduser", "feedpassword");
+            Log.d("MySimpleTask", content);
+            flowers = FlowerJSONParser.parseFeed(content);
+
+            return flowers;
+        }
+
+        @Override
+        protected void onPostExecute(List<Flower> result) {
+
+            tasksS.remove(this);
+            if (tasksS.size()==0){
                 pb.setVisibility(View.INVISIBLE);
             }
 
