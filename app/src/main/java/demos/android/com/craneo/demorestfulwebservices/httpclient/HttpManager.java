@@ -1,13 +1,20 @@
 package demos.android.com.craneo.demorestfulwebservices.httpclient;
 
 import android.util.Base64;
+import android.util.Log;
+
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+
+import demos.android.com.craneo.demorestfulwebservices.request.RequestPackage;
 
 /**
  * Created by crane on 10/29/2016.
@@ -17,20 +24,36 @@ public class HttpManager {
 
     /**
      * Simple method to get a Connection without credentials
-     * @param uri
+     * @RequestPackage p
      * @return
      */
-    public static String getData(String uri){
+    public static String getData(RequestPackage p){
 
         BufferedReader reader = null;
+        String uri = p.getUri();
+        if (p.getMethod().equals("GET")){
+            uri += "?"+p.getEncodeParams();
+        }
 
         try {
             //Start the connection
             URL url = new URL(uri);
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
+            con.setRequestMethod(p.getMethod());
+
+            JSONObject json = new JSONObject(p.getParams());
+            String params = "params="+json.toString();
+
+            if(p.getMethod().equals("POST")){
+                con.setDoOutput(true);
+                OutputStreamWriter writer = new OutputStreamWriter(con.getOutputStream());
+//                writer.write(p.getEncodeParams());
+                writer.write(params);
+                writer.flush();
+            }
 
             StringBuilder sb = new StringBuilder();
-
+            Log.d("HttpManager", uri);
             reader = new BufferedReader(new InputStreamReader(con.getInputStream()));
 
             //Get all the information in the reader.

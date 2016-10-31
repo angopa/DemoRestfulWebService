@@ -1,5 +1,6 @@
 package demos.android.com.craneo.demorestfulwebservices;
 
+import android.app.DownloadManager;
 import android.app.ListActivity;
 import android.content.Context;
 import android.net.ConnectivityManager;
@@ -25,6 +26,7 @@ import demos.android.com.craneo.demorestfulwebservices.adapter.FlowerAdapter;
 import demos.android.com.craneo.demorestfulwebservices.httpclient.HttpManager;
 import demos.android.com.craneo.demorestfulwebservices.model.Flower;
 import demos.android.com.craneo.demorestfulwebservices.parsers.FlowerJSONParser;
+import demos.android.com.craneo.demorestfulwebservices.request.RequestPackage;
 
 public class MainActivity extends ListActivity {
 
@@ -75,7 +77,8 @@ public class MainActivity extends ListActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         if(item.getItemId() == R.id.action_do_task){
             if (isOnline()){
-                requestData("http://services.hanselandpetal.com/secure/flowers.json");
+                //requestData("http://services.hanselandpetal.com/secure/flowers.json");
+                requestData("http://127.0.0.1:8080/Jersey_1/rest/hello");
             }else{
                 Toast.makeText(this, "Network isn't available", Toast.LENGTH_LONG).show();
             }
@@ -84,8 +87,14 @@ public class MainActivity extends ListActivity {
     }
 
     private void requestData(String uri) {
+        RequestPackage p = new RequestPackage();
+        p.setMethod("GET");
+        p.setUri(uri);
+        p.setParams("param1", "value1");
+        p.setParams("param2", "value2");
+        p.setParams("param3", "value3");
         MyTask task = new MyTask();
-        task.execute(uri);
+        task.execute(p);
     }
 
     private void updateDisplay() {
@@ -105,7 +114,7 @@ public class MainActivity extends ListActivity {
     }
 
 
-    private class MyTask extends AsyncTask<String, String, List<Flower>>{
+    private class MyTask extends AsyncTask<RequestPackage, String, List<Flower>>{
 
         @Override
         protected void onPreExecute() {
@@ -116,9 +125,9 @@ public class MainActivity extends ListActivity {
         }
 
         @Override
-        protected List<Flower> doInBackground(String... strings) {
+        protected List<Flower> doInBackground(RequestPackage... strings) {
             //Send the request to public static String getData(String uri, String userName, String password){
-            String content = HttpManager.getData(strings[0], "feeduser", "feedpassword");
+            String content = HttpManager.getData(strings[0]);
             flowers = FlowerJSONParser.parseFeed(content);
 
             return flowers;
@@ -133,7 +142,7 @@ public class MainActivity extends ListActivity {
             }
 
             if (result == null){
-                Toast.makeText(MainActivity.this, "Can't connect to we service", Toast.LENGTH_LONG).show();
+                Toast.makeText(MainActivity.this, "Can't connect to the service", Toast.LENGTH_LONG).show();
                 return;
             }
             updateDisplay();
