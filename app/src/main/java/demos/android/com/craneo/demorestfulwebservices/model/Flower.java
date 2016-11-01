@@ -2,11 +2,13 @@ package demos.android.com.craneo.demorestfulwebservices.model;
 
 import android.graphics.Bitmap;
 
+import javax.annotation.Generated;
+
 /**
  * Created by crane on 10/29/2016.
  * POJO
  */
-
+@Generated("org.jsonschema2pojo")
 public class Flower {
 
     private int productId;

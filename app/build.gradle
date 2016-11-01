@@ -29,5 +29,13 @@ dependencies {
 
     //OkHttp
     compile 'com.squareup.okhttp3:okhttp:3.4.1'
-    compile 'com.mcxiaoke.volley:library:1.0.+'
+
+    //Volley
+    compile 'com.mcxiaoke.volley:library:1.0.1'
+
+    //Retrofit
+    compile 'com.google.code.gson:gson:2.6.2'
+    compile 'com.squareup.retrofit2:retrofit:2.1.0'
+    compile 'com.squareup.retrofit2:converter-gson:2.1.0'
+    provided 'org.glassfish:javax.annotation:10.0-b28'
 }

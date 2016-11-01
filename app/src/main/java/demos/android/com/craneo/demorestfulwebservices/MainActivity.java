@@ -113,12 +113,15 @@ public class MainActivity extends ListActivity {
         ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo netInfo = cm.getActiveNetworkInfo();
         if(netInfo != null && netInfo.isConnectedOrConnecting()){
+            if(netInfo.getType() != ConnectivityManager.TYPE_WIFI){
+                Toast.makeText(this, "This app doesnt work without WI-FI", Toast.LENGTH_SHORT).show();
+                return false;
+            }
             return true;
         }else{
             return false;
         }
     }
-
 
     private class MyTask extends AsyncTask<RequestPackage, String, List<Flower>>{
 
